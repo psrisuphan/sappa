@@ -1,29 +1,42 @@
 ## TEST CASE
 
-=== DC Motor Auto Identification + PID Auto Tuning ===<br>
-ใส่ค่าพารามิเตอร์ (กด Enter = ใช้ค่า default ถ้ามี) | ใส่ -1 = ไม่ระบุ<br>
-R (Ohm) [default 1.0] : <br>
-L (H) [default 0.5]   : <br>
-Kt (N·m/A) [0.01]     : <br>
-Ke (V·s/rad) [0.01]   : <br>
-J (kg·m^2) [-1=unknown]: -1<br>
-b (N·m·s)  [-1=unknown]: -1<br>
-ใช้โมเดลรวม L (2nd order) ไหม? [Y/n]: y<br>
-ขนาด Step ของแรงดันทดสอบ/ควบคุม [1.0]: 1<br>
-เวลาจำลอง (s) [4.0]: 4<br>
-ใช้ derivative filter สำหรับ Kd หรือไม่? [Y/n]: y<br>
-Derivative filter Tf (s) [0.01]: <br>
-<br>
-ต้องใช้ไฟล์ CSV ข้อมูล step response (2 คอลัมน์: t,omega) ไม่มี header<br>
-พาธไฟล์ CSV (เว้นว่างเพื่อ 'สร้างไฟล์จำลอง'): <br>
---- โหมดจำลอง step_data.csv ---<br>
-กำหนด J_true สำหรับการจำลอง [0.01]: 0.01<br>
-กำหนด b_true สำหรับการจำลอง [0.1] : 0.1<br>
-เวลาจำลองไฟล์ (s) [3.0]: <br>
-ช่วงเวลาเก็บข้อมูล dt (s) [0.01]: <br>
-noise std (rad/s) [0.0=ไม่มี]: 0.01<br>
-<br>
+=== DC Motor Auto Identification + PID Auto Tuning ===
+<pre>ใส่ค่าพารามิเตอร์ (กด Enter = ใช้ค่า default ถ้ามี) | ใส่ -1 = ไม่ระบุ<br>
+    R (Ohm) [default 1.0] : 
+    L (H) [default 0.5]   : 
+    Kt (N·m/A) [0.01]     : 
+    Ke (V·s/rad) [0.01]   : 
+    J (kg·m^2) [-1=unknown]: -1
+    b (N·m·s)  [-1=unknown]: -1
+    ใช้โมเดลรวม L (2nd order) ไหม? [Y/n]: y
+    ขนาด Step ของแรงดันทดสอบ/ควบคุม [1.0]: 1
+    เวลาจำลอง (s) [4.0]: 4
+    ใช้ derivative filter สำหรับ Kd หรือไม่? [Y/n]: y
+    Derivative filter Tf (s) [0.01]: 
+    
+    ต้องใช้ไฟล์ CSV ข้อมูล step response (2 คอลัมน์: t,omega) ไม่มี header
+    พาธไฟล์ CSV (เว้นว่างเพื่อ 'สร้างไฟล์จำลอง'): <br>
+    --- โหมดจำลอง step_data.csv ---
+    กำหนด J_true สำหรับการจำลอง [0.01]: 0.01
+    กำหนด b_true สำหรับการจำลอง [0.1] : 0.1
+    เวลาจำลองไฟล์ (s) [3.0]: 
+    ช่วงเวลาเก็บข้อมูล dt (s) [0.01]: 
+    noise std (rad/s) [0.0=ไม่มี]: 0.01
+</pre>
 ***Output ควรได้ค่า Kp, Ki, Kd ที่ทำให้กราฟนิ่งที่สุด + เกิด Overshoot น้อยที่สุด
+<pre>
+Expected :
+    [PID] Initial (grid): Kp=199.054 Ki=95.873 Kd=10.574
+    [PID] Optimized     : Kp=211.344 Ki=308.839 Kd=28.452
+
+=== Metrics (Optimized PID) ===
+    PO: 0.0011
+    ts: 0.0400
+    tr: 0.0250
+    ess: 0.0000
+    IAE: 0.0332
+    y_ss: 1.0000003645043618
+</pre>
 
 # DC Motor Speed Control with PID Tuning
 
