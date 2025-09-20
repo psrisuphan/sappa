@@ -44,24 +44,25 @@ noise std (rad/s) [0.0=ไม่มี]: 0.01<br>
 
 ### วิธีการติดตั้ง dependencies:
 1. สร้าง virtual environment ใหม่:
-
+    ```
     python -m venv .venv
+    ```
 
 2. เปิดใช้งาน virtual environment:
 
     - สำหรับ macOS/Linux:
-
+        ```
         source .venv/bin/activate
-
+        ```
     - สำหรับ Windows:
-
+        ```
         .venv\Scripts\activate
-
+        ```
 3. ติดตั้ง dependencies จาก `requirements.txt`:
-
+   ```
     pip install --upgrade pip
     pip install -r requirements.txt
-
+    ```
 *****วิธีการใช้งาน*****
 
 1. ป้อนค่าพารามิเตอร์ของมอเตอร์ DC
