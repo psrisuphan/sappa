@@ -2,3 +2,4 @@ numpy==2.1.1
 scipy==1.14.1
 matplotlib==3.9.2
 control==0.9.4
+streamlit==1.37.1
