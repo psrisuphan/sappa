@@ -1,120 +1,84 @@
-## TEST CASE
+# DC Motor Auto Identification & PID Auto-Tuning
 
-=== DC Motor Auto Identification + PID Auto Tuning ===
-<pre>ใส่ค่าพารามิเตอร์ (กด Enter = ใช้ค่า default ถ้ามี) | ใส่ -1 = ไม่ระบุ<br>
-    R (Ohm) [default 1.0] : 
-    L (H) [default 0.5]   : 
-    Kt (N·m/A) [0.01]     : 
-    Ke (V·s/rad) [0.01]   : 
-    J (kg·m^2) [-1=unknown]: -1
-    b (N·m·s)  [-1=unknown]: -1
-    ใช้โมเดลรวม L (2nd order) ไหม? [Y/n]: y
-    ขนาด Step ของแรงดันทดสอบ/ควบคุม [1.0]: 1
-    เวลาจำลอง (s) [4.0]: 4
-    ใช้ derivative filter สำหรับ Kd หรือไม่? [Y/n]: y
-    Derivative filter Tf (s) [0.01]: 
-    
-    ต้องใช้ไฟล์ CSV ข้อมูล step response (2 คอลัมน์: t,omega) ไม่มี header
-    พาธไฟล์ CSV (เว้นว่างเพื่อ 'สร้างไฟล์จำลอง'): <br>
-    --- โหมดจำลอง step_data.csv ---
-    กำหนด J_true สำหรับการจำลอง [0.01]: 0.01
-    กำหนด b_true สำหรับการจำลอง [0.1] : 0.1
-    เวลาจำลองไฟล์ (s) [3.0]: 
-    ช่วงเวลาเก็บข้อมูล dt (s) [0.01]: 
-    noise std (rad/s) [0.0=ไม่มี]: 0.01
-</pre>
-***Output ควรได้ค่า Kp, Ki, Kd ที่ทำให้กราฟนิ่งที่สุด + เกิด Overshoot น้อยที่สุด
-<pre>
-Expected :
-    [PID] Initial (grid): Kp=199.054 Ki=95.873 Kd=10.574
-    [PID] Optimized     : Kp=211.344 Ki=308.839 Kd=28.452
+โค้ดนี้ช่วยจำลองระบบควบคุมความเร็วของมอเตอร์ DC พร้อมหลากหลายเครื่องมือสำหรับระบุพารามิเตอร์เชิงกล (J, b) และหาค่า PID ที่เหมาะสมที่สุด ปัจจุบันรองรับทั้งโหมด CLI แบบดั้งเดิมและอินเทอร์เฟซแบบกราฟิกด้วย Streamlit
 
-=== Metrics (Optimized PID) ===
-    PO: 0.0011
-    ts: 0.0400
-    tr: 0.0250
-    ess: 0.0000
-    IAE: 0.0332
-    y_ss: 1.0000003645043618
-</pre>
+## Highlights
+- จำลองพืช (plant) มอเตอร์ DC แบบ order 1 หรือ order 2
+- ระบุค่าความเฉื่อย (J) และแรงเสียดทาน (b) จากข้อมูล step response
+- ตั้งค่าและปรับจูน PID อัตโนมัติด้วยการค้นหาหยาบและปรับละเอียด
+- ตรวจสอบผลการควบคุมด้วยกราฟ step response และตารางสรุปตัวชี้วัด
 
-# DC Motor Speed Control with PID Tuning
+## Environment Setup
+ต้องมี Python 3.10+ และ pip
 
-## Overview
-โปรเจคนี้ทำการจำลองการควบคุมความเร็วของมอเตอร์ DC โดยใช้ **PID controller** และสามารถปรับค่า **Kp**, **Ki**, และ **Kd** เพื่อให้ได้การตอบสนองที่ดีที่สุดสำหรับมอเตอร์ในระบบควบคุม
+```
+# 1) Clone หรือดาวน์โหลดโปรเจ็กต์
+git clone <repo-url>
+cd dc-motor-auto-tune
 
-## Requirements
-โปรเจคนี้ต้องการ Python environment ที่ติดตั้ง dependencies ต่อไปนี้:
+# 2) สร้างและเปิดใช้งาน virtual environment
+python3 -m venv .venv
+source .venv/bin/activate      # macOS/Linux
+.venv\Scripts\activate         # Windows PowerShell
 
-- **Python 3.12** หรือ **Python 3.13**
-- **pip** (เพื่อใช้ติดตั้ง dependencies)
+# 3) ติดตั้ง dependencies ที่ต้องใช้
+pip install --upgrade pip
+pip install -r requirements.txt
 
-แพ็คเกจที่จำเป็นต้องใช้:
-- `numpy`
-- `scipy`
-- `matplotlib`
-- `control`
+# 4) รันโหมด CLI (หากต้องการ)
+python dc_motor_auto_tune.py
 
-### วิธีการติดตั้ง dependencies:
-1. สร้าง virtual environment ใหม่:
-    ```
-    python -m venv .venv
-    ```
+# 5) หรือรันโหมด Streamlit GUI
+streamlit run streamlit_app.py
+```
 
-2. เปิดใช้งาน virtual environment:
+แพ็กเกจหลัก: `numpy`, `scipy`, `matplotlib`, `control`, `streamlit`
 
-    - สำหรับ macOS/Linux:
-        ```
-        source .venv/bin/activate
-        ```
-    - สำหรับ Windows:
-        ```
-        .venv\Scripts\activate
-        ```
-3. ติดตั้ง dependencies จาก `requirements.txt`:
-   ```
-    pip install --upgrade pip
-    pip install -r requirements.txt
-    ```
-*****วิธีการใช้งาน*****
+## Option A – Command Line Interface
+ไฟล์ `dc_motor_auto_tune.py` คือเวอร์ชัน CLI
 
-1. ป้อนค่าพารามิเตอร์ของมอเตอร์ DC
+```
+python dc_motor_auto_tune.py
+```
 
-เมื่อรันโปรแกรม โปรแกรมจะขอให้กรอกค่าพารามิเตอร์ของมอเตอร์ เช่น:
+ลำดับการทำงานเมื่อรันสคริปต์
+- ป้อนค่าพารามิเตอร์ R, L, Kt, Ke, J, b (ใส่ -1 เพื่อให้โปรแกรมประเมินจากข้อมูล step response)
+- ระบุว่าจะใช้โมเดลที่รวม L, กำลังของ step ที่ทดสอบ, เวลาจำลอง, และข้อมูลสำหรับ derivative filter
+- ถ้าต้องระบุ J หรือ b ระบบจะขอไฟล์ CSV แบบสองคอลัมน์ [t, omega] หรือสร้างข้อมูลจำลองให้
+- โปรแกรมจะระบุ J/b (ถ้าจำเป็น), จูน PID, แล้วแสดงกราฟและสรุปตัวชี้วัด
 
-    J: Moment of inertia (kg.m²)
-    b: Damping coefficient (N.m.s)
-    R: Resistance (Ohm)
-    L: Inductance (H)
-    K: Motor constant (Nm/A หรือ Vs/rad)
-    หากไม่ได้ระบุค่า J หรือ b (ใส่ -1), โปรแกรมจะทำการคำนวณค่าผ่าน System Identification เพื่อหาค่าที่เหมาะสม
+## Option B – Streamlit GUI
+ไฟล์ `streamlit_app.py` เปิด GUI สำหรับทำทุกขั้นตอนแบบ interactive
 
-2. ปรับแต่ง PID Controller
+```
+streamlit run streamlit_app.py
+```
 
-ในขั้นตอนนี้ ผู้ใช้สามารถกรอกค่า PID สำหรับการควบคุมมอเตอร์:
+ส่วน Sidebar
+- Mechanical/Electrical parameters: กรอกค่าที่ทราบหรือเลือก identify J/b
+- Control settings: magnitude ของ step, เวลา simulation, ตัวเลือก derivative filter
+- Identification data (หากเลือก identify): อัปโหลด CSV, ใช้ `step_data.csv`, หรือสร้างข้อมูลจำลองพร้อม noise
 
-    Kp: Proportional gain
-    Ki: Integral gain
-    Kd: Derivative gain
-    หากไม่ใส่ค่าเหล่านี้ โปรแกรมจะใช้ค่าที่ตั้งไว้ล่วงหน้าเพื่อทดสอบการตอบสนองของระบบ
+ผลลัพธ์
+- แสดงค่าพารามิเตอร์ที่ใช้และ PID gain ที่จูนได้
+- แสดงกราฟ identification fit และกราฟ step response เปรียบเทียบ P, PI, PID
+- สรุปตัวชี้วัด เช่น overshoot, settling time, steady-state error
+- แสดงข้อมูลดิบ step response เพื่อการตรวจสอบ
 
-3. การจำลองและการพล็อตกราฟ
+## CSV Format for Identification
+ไฟล์ต้องมี 2 คอลัมน์ (ไม่มี header)
 
-    โปรแกรมจะทำการคำนวณและจำลองการตอบสนองของมอเตอร์ DC โดยใช้ PID controller ที่ผู้ใช้กำหนด และจะแสดงกราฟ Speed (rad/s) กับ Time (s) สำหรับแต่ละค่าของ PID ที่ทดสอบ
+```
+time_seconds, omega_radians_per_second
+```
 
-4. การรันโปรแกรม
+เวลา sampling ควรสม่ำเสมอ หากมี noise สามารถปล่อยไว้ได้ โปรแกรมจะใช้ข้อมูลนั้นโดยตรง
 
-    รันโปรแกรมโดยใช้คำสั่ง:
+## Known Limitations
+- การจูน PID อาจใช้เวลามากกับชุดพารามิเตอร์ที่ทำให้ระบบเกือบไม่เสถียร
+- ข้อมูล step response ที่มี noise สูงอาจทำให้ค่าที่ระบุเบี่ยงเบน ต้องใช้ฟิลเตอร์หรือเพิ่มจำนวนข้อมูล
 
-        python motor_control.py
-
-เมื่อรันโปรแกรม โปรแกรมจะถามค่าพารามิเตอร์ต่างๆ จากผู้ใช้ และแสดงกราฟที่จำลองการตอบสนองของมอเตอร์ที่ควบคุมด้วย PID
-
-*****ตัวอย่างผลลัพธ์*****
-
-โปรแกรมจะสร้างกราฟที่แสดงผลของการควบคุมมอเตอร์ DC ในการตอบสนองแบบ Step Response โดยแสดงความเร็ว (rad/s) ของมอเตอร์ตามเวลา (s) เมื่อได้รับสัญญาณ Step จาก PID controller ที่ทดสอบ
-หมายเหตุ: หากผู้ใช้ไม่มีข้อมูลของมอเตอร์จากผู้ผลิต (เช่น ค่า J, b), โปรแกรมจะทำการประเมินค่าด้วย System Identification แทน เพื่อหาค่าที่เหมาะสมที่สุด
-
-การปรับแต่งเพิ่มเติม
-    สามารถปรับค่าของ Kp, Ki, และ Kd เพื่อทดสอบผลลัพธ์ต่างๆ และดูการตอบสนองของมอเตอร์
-    สำหรับการหาค่าพารามิเตอร์มอเตอร์ (J, b) ที่แม่นยำขึ้น, สามารถใช้ System Identification เพื่อหาค่าจากข้อมูล Step Response ที่เก็บได้
+## Troubleshooting
+- ถ้ารัน Streamlit แล้วเจอ error เกี่ยวกับ matplotlib backend ให้ปิดหน้าต่างกราฟทั้งหมดก่อนรันใหม่
+- หากไม่มี `python` ให้ใช้ `python3` แทนในคำสั่งทั้งหมด
+ 
