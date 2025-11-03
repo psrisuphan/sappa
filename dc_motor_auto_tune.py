@@ -5,6 +5,7 @@ from scipy.optimize import least_squares, minimize
 import os
 
 # ============== Utilities ==============
+#function สำหรับรับค่าต่าง ๆ
 def ask_float(prompt, default=None):
     s = input(prompt).strip()
     if s == "" and default is not None:
@@ -26,6 +27,7 @@ def ask_yesno(prompt, default="y"):
     print("กรุณาตอบ y หรือ n")
     return ask_yesno(prompt, default)
 
+#จำลอง step_response ของมอเตอร์
 def step_metrics(sys, step_mag=1.0, t_end=4.0, npts=1600):
     t = np.linspace(0, t_end, npts)
     t, y = ct.step_response(sys * step_mag, t)
@@ -44,6 +46,7 @@ def step_metrics(sys, step_mag=1.0, t_end=4.0, npts=1600):
     iae = np.trapz(np.abs(e), t)
     return {"t": t, "y": y, "yss": yss, "PO": PO, "ts": ts, "tr": tr, "ess": ess, "IAE": iae}
 
+#transfer function ของมอเตอร์
 def dc_motor_tf(R, L, J, b, Kt, Ke, include_L=True):
     if include_L:
         # G(s) = Kt / [(Ls+R)(Js+b) + Kt*Ke] (second order)
@@ -65,7 +68,7 @@ def pid_controller(Kp, Ki, Kd, use_d_filter=True, Tf=0.01):
     else:
         return ct.TransferFunction([Kd, Kp, Ki], [1, 0])
 
-# ============== สร้าง step_data.csv แบบจำลอง ==============
+# ============== สร้าง step_data.csv แบบจำลองในกรณีที่ไม่มี step_response จริง ==============
 def synthesize_step_data(path_csv, R, L, Kt, Ke, J_true, b_true,
                          step_mag=1.0, t_end=3.0, dt=0.01, include_L=True,
                          noise_std=0.0, seed=0):
@@ -200,7 +203,7 @@ def tune_pid(G, step_mag=1.0, t_end=4.0, npts=1600, use_d_filter=True, Tf=0.01,
 
     return Kp_opt, Ki_opt, Kd_opt, met_best
 
-# ============== Main flow ==============
+# ============== Main ==============
 def main():
     print("=== DC Motor Auto Identification + PID Auto Tuning ===\n"
           "ใส่ค่าพารามิเตอร์ (กด Enter = ใช้ค่า default ถ้ามี) | ใส่ -1 = ไม่ระบุ")
@@ -252,7 +255,7 @@ def main():
         J = J_hat if J < 0 else J
         b = b_hat if b < 0 else b
 
-    # Build plant
+    # สร้าง Transfer function ของมอเตอร์จากตัวแปรต่าง ๆ ที่รับค่า
     G = dc_motor_tf(R, L, J, b, Kt, Ke, include_L=include_L)
     print("\nPlant G(s) =", G)
 
@@ -262,7 +265,7 @@ def main():
         use_d_filter=use_d_filter, Tf=Tf
     )
 
-    # Show all figures
+    # Show กราฟ response ของมอเตอร์
     plt.show()
 
 if __name__ == "__main__":
